@@ -1,0 +1,42 @@
+[declaration]
+#add prefix to declaration
+prefix_name CALC
+
+include "\"calc.h\""
+include "\"stdio.h\""
+include "\"stdlib.h\""
+callback "typedef int (*fsm_callback)(CALC_FSM_STATE *state, int evt, int arg, CALC_DATA *data)"
+callback_prefix "static int "
+callback_args "(CALC_FSM_STATE *state, int evt, int arg, CALC_DATA *data)"
+func_name calc_handle_event
+init_name calc_fsm_init
+init_state idle_state
+event_error "fprintf(stderr, \"Invalid event '%c' %d\\n\", arg, evt); calculator_reset(data)"
+
+[table]
+
+#Init state
+idle_state        idle_state      EVENT_BLANK
+number_enter      idle_state      EVENT_DIGIT       on_digit_enter
+signum_enter      idle_state      EVENT_PLUS        on_signum_enter
+signum_enter      idle_state      EVENT_MINUS       on_signum_enter
+
+#Signum enter state
+signum_enter      signum_enter    EVENT_BLANK
+number_enter      signum_enter    EVENT_DIGIT       on_digit_enter
+
+
+#Enter number state
+number_enter      number_enter    EVENT_BLANK
+number_enter      number_enter    EVENT_DIGIT       on_digit_enter
+oper_enter        number_enter    EVENT_PLUS        on_oper_enter
+oper_enter        number_enter    EVENT_MINUS       on_oper_enter
+oper_enter        number_enter    EVENT_MUL         on_oper_enter
+oper_enter        number_enter    EVENT_DIV         on_oper_enter
+idle_state        number_enter    EVENT_EQUAL       on_equal_enter
+
+#Enter operator state
+oper_enter        oper_enter      EVENT_BLANK
+number_enter      oper_enter      EVENT_DIGIT       on_digit_enter
+signum_enter      oper_enter      EVENT_PLUS        on_signum_enter
+signum_enter      oper_enter      EVENT_MINUS       on_signum_enter

@@ -1,0 +1,75 @@
+#Final state machine for lexing pfs source files
+[declaration]
+class_name fsm_lex
+init_state  idle
+
+[table]
+#destination_state  source_state event [callback]
+#Events:
+#LPAREN RPAREN
+#LBRACKET RBRACKET
+#LBRACE RBRACE
+#COMMA PERIOD SEMI COLON
+#BLANK
+#NEWLINE
+#APOS QUOT
+#ALPHA DIGIT SYMBOL
+#NUMBER '#'
+#ASTERISK *
+#SLASH \
+
+#idle state
+idle                idle          BLANK
+idle                idle          NEWLINE
+section             idle          LBRACKET              on_begin_section
+wait_newline        idle          NUMBER #comment
+ident               idle          ALPHA                 on_begin_statement
+mask                idle          ASTERISK              on_begin_statement
+
+#section
+wait_newline        section       RBRACKET              on_end_section
+section             section       DIGIT
+section             section       ALPHA
+section             section       SYMBOL
+
+#wait newline
+wait_newline        wait_newline  *
+idle                wait_newline  NEWLINE
+
+#ident
+ident               ident         ALPHA
+ident               ident         DIGIT
+statement           ident         BLANK                 on_end_ident
+wait_newline        ident         NUMBER                on_end_statement  #comment
+idle                ident         NEWLINE               on_end_statement
+
+#statement
+wait_newline        statement     NUMBER                on_end_statement  #comment
+ident               statement     ALPHA                 on_begin_ident
+mask                statement     ASTERISK              on_begin_ident
+statement           statement     BLANK
+idle                statement     NEWLINE               on_end_statement
+astring             statement     APOS                  on_begin_string
+qstring             statement     QUOT                  on_begin_string
+
+#APOS string 'aaa\n\x00\0'
+astring             astring       *
+aescape             astring       SLASH
+statement           astring       APOS                  on_end_string
+
+#aescape //TODO
+astring             aescape       *
+
+#QUOT string "aaa\n\x00\0"
+qstring             qstring       *
+qescape             qstring       SLASH
+statement           qstring       QUOT                  on_end_string
+
+
+#qescape //TODO
+qstring             qescape       *
+
+#mask
+statement           mask         BLANK                  on_end_ident
+idle                mask         NEWLINE                on_end_statement
+wait_newline        mask         NUMBER                 on_end_statement  #comment
